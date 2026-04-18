@@ -34,6 +34,7 @@ migrate_working_dir/
 /coverage/
 *.zip
 *.jpg
+*.md
 /kenney_new-platformer-pack-1.1 (1)/
 
 # Symbolication related
