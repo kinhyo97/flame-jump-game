@@ -17,6 +17,11 @@ final class ImageAssets {
   static const terrainGrassHorizontalRight = 'terrain/terrain_grass_horizontal_right.png';
   static const coinGold = 'items/coin_gold.png';
   static const coinGoldSide = 'items/coin_gold_side.png';
+  static const heartPickup = 'ui/hud_heart.png';
+  static const starPickup = 'items/star.png';
+  static const terrainStoneVerticalTop = 'terrain/terrain_stone_vertical_top.png';
+  static const terrainStoneVerticalMiddle = 'terrain/terrain_stone_vertical_middle.png';
+  static const terrainStoneVerticalBottom = 'terrain/terrain_stone_vertical_bottom.png';
   static const doorClosed = 'props/door_closed.png';
   static const doorOpen = 'props/door_open.png';
   static const checkpointInactive = 'items/flag_off.png';

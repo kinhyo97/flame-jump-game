@@ -10,6 +10,15 @@ class ClearOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFinalRound = !game.level.hasNextStage;
+    final shouldRetryCurrentStage = game.shouldRetryCurrentStageOnClear;
+    final title = isFinalRound ? 'All Rounds Clear!' : 'Round Clear!';
+    final buttonLabel = shouldRetryCurrentStage
+        ? 'Retry'
+        : isFinalRound
+        ? 'Play Again'
+        : 'Next Round';
+
     return ColoredBox(
       color: const Color(0xAA10151F),
       child: Center(
@@ -24,15 +33,24 @@ class ClearOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Level Clear!',
-                style: TextStyle(
+              Text(
+                title,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 12),
+              Text(
+                'Round ${game.level.currentStageNumber} / ${game.level.totalStages}',
+                style: const TextStyle(
+                  color: Color(0xFF8BD3FF),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
               Text(
                 'Collected ${game.coinsCollected} / ${game.level.totalCoins} coins',
                 style: const TextStyle(color: Color(0xFFD6E2F0), fontSize: 18),
@@ -41,15 +59,20 @@ class ClearOverlay extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: game.resetLevel,
+                  onPressed: shouldRetryCurrentStage || isFinalRound
+                      ? game.resetLevel
+                      : game.advanceToNextStage,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC857),
                     foregroundColor: const Color(0xFF1A2233),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  child: Text(
+                    buttonLabel,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

@@ -1,0 +1,6 @@
+flutter build web
+Copy-Item -LiteralPath vercel.json -Destination build\web\vercel.json -Force
+npx vercel deploy build/web --prod --yes
+
+cd build/web
+python -m http.server 3529 --bind 0.0.0.0

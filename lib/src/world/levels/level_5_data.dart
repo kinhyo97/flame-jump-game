@@ -1,0 +1,113 @@
+import 'package:flame/components.dart';
+
+import '../level_models.dart';
+import '../platform_surface.dart';
+
+final LevelData level5Data = LevelData(
+  playerSpawn: Vector2(120, 520),
+  exitPosition: Vector2(2080, 92),
+  surfaces: [
+    PlatformSurface(position: Vector2(0, 624), size: Vector2(2240, 96)),
+    PlatformSurface(position: Vector2(140, 545), size: Vector2(90, 28)),
+    PlatformSurface(position: Vector2(310, 485), size: Vector2(95, 28)),
+    PlatformSurface(position: Vector2(500, 430), size: Vector2(92, 28)),
+    PlatformSurface(position: Vector2(700, 372), size: Vector2(96, 28)),
+    PlatformSurface(position: Vector2(910, 318), size: Vector2(100, 28)),
+    PlatformSurface(position: Vector2(1140, 266), size: Vector2(105, 28)),
+    PlatformSurface(position: Vector2(1385, 215), size: Vector2(100, 28)),
+    PlatformSurface(position: Vector2(1625, 165), size: Vector2(96, 28)),
+    PlatformSurface(position: Vector2(1880, 118), size: Vector2(155, 28)),
+    PlatformSurface(position: Vector2(610, 520), size: Vector2(120, 28)),
+    PlatformSurface(position: Vector2(1260, 470), size: Vector2(110, 28)),
+    PlatformSurface(position: Vector2(1730, 315), size: Vector2(98, 28)),
+  ],
+  coinSpawnPoints: [
+    Vector2(165, 495),
+    Vector2(268, 418),
+    Vector2(530, 380),
+    Vector2(662, 292),
+    Vector2(884, 238),
+    Vector2(1110, 196),
+    Vector2(1415, 165),
+    Vector2(1576, 84),
+    Vector2(1980, 44),
+    Vector2(655, 470),
+    Vector2(1216, 390),
+    Vector2(1692, 210),
+    Vector2(2140, 572),
+  ],
+  spikeSpawnPoints: [
+    Vector2(255, 594),
+    Vector2(470, 594),
+    Vector2(685, 594),
+    Vector2(900, 594),
+    Vector2(1115, 594),
+    Vector2(1330, 594),
+    Vector2(1545, 594),
+    Vector2(1760, 594),
+    Vector2(1190, 236),
+    Vector2(1435, 185),
+    Vector2(1912, 88),
+  ],
+  sawSpawnPoints: [
+    Vector2(355, 453),
+    Vector2(742, 340),
+    Vector2(980, 286),
+    Vector2(1238, 438),
+    Vector2(1660, 133),
+    Vector2(1768, 283),
+  ],
+  checkpoints: [
+    CheckpointData(
+      position: Vector2(660, 456),
+      size: Vector2(24, 64),
+      respawnPosition: Vector2(620, 472),
+    ),
+    CheckpointData(
+      position: Vector2(1315, 406),
+      size: Vector2(24, 64),
+      respawnPosition: Vector2(1275, 422),
+    ),
+    CheckpointData(
+      position: Vector2(1810, 251),
+      size: Vector2(24, 64),
+      respawnPosition: Vector2(1750, 267),
+    ),
+  ],
+  springSpawnPoints: [
+    Vector2(430, 592),
+    Vector2(1080, 592),
+    Vector2(1505, 592),
+    Vector2(1705, 283),
+  ],
+  movingPlatforms: [
+    MovingPlatformData(
+      position: Vector2(250, 380),
+      size: Vector2(88, 24),
+      startPosition: Vector2(250, 380),
+      travelDistance: 120,
+      speed: 2.2,
+    ),
+    MovingPlatformData(
+      position: Vector2(820, 215),
+      size: Vector2(88, 24),
+      startPosition: Vector2(820, 215),
+      travelDistance: 150,
+      speed: 2.4,
+    ),
+    MovingPlatformData(
+      position: Vector2(1470, 105),
+      size: Vector2(92, 24),
+      startPosition: Vector2(1470, 105),
+      travelDistance: 135,
+      speed: 2.5,
+    ),
+    MovingPlatformData(
+      position: Vector2(1965, 255),
+      size: Vector2(92, 24),
+      startPosition: Vector2(1965, 255),
+      travelDistance: 110,
+      speed: 2.3,
+    ),
+  ],
+);

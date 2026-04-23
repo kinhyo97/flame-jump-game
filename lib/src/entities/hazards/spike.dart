@@ -17,5 +17,10 @@ class Spike extends Hazard with HasGameReference<JumpGame> {
   }
 
   @override
-  Rect get bounds => Rect.fromLTWH(position.x, position.y, size.x, size.y);
+  Rect get bounds => Rect.fromLTWH(
+    position.x + 4,
+    position.y + 6,
+    size.x - 8,
+    size.y - 6,
+  );
 }

@@ -6,42 +6,51 @@ import '../core/constants.dart';
 import '../entities/hazards/saw.dart';
 import '../entities/hazards/spike.dart';
 import '../entities/items/coin.dart';
+import '../entities/items/heart_pickup.dart';
+import '../entities/items/star_pickup.dart';
 import '../entities/objects/checkpoint.dart';
+import '../entities/objects/disappearing_platform.dart';
 import '../entities/objects/exit_gate.dart';
 import '../entities/objects/moving_platform.dart';
+import '../entities/objects/stone_wall.dart';
 import '../entities/objects/spring.dart';
+import '../entities/objects/test_portal.dart';
+import '../entities/objects/vertical_moving_platform.dart';
 import '../game/jump_game.dart';
-
-class PlatformSurface {
-  const PlatformSurface({required this.position, required this.size});
-
-  final Vector2 position;
-  final Vector2 size;
-
-  double get left => position.x;
-  double get right => position.x + size.x;
-  double get top => position.y;
-  double get bottom => position.y + size.y;
-}
+import 'levels_registry.dart';
 
 class Level extends PositionComponent with HasGameReference<JumpGame> {
   Level()
     : coins = [],
+      hearts = [],
+      stars = [],
       spikes = [],
       saws = [],
       checkpoints = [],
       springs = [],
-      movingPlatforms = [];
+      walls = [],
+      movingPlatforms = [],
+      verticalMovingPlatforms = [],
+      disappearingPlatforms = [],
+      testPortals = [],
+      surfaces = [];
 
   static const double _tileSize = 32;
 
-  late final List<PlatformSurface> surfaces;
+  List<PlatformSurface> surfaces;
   final List<Coin> coins;
+  final List<HeartPickup> hearts;
+  final List<StarPickup> stars;
   final List<Spike> spikes;
   final List<Saw> saws;
   final List<Checkpoint> checkpoints;
   final List<Spring> springs;
+  final List<StoneWall> walls;
   final List<MovingPlatform> movingPlatforms;
+  final List<VerticalMovingPlatform> verticalMovingPlatforms;
+  final List<DisappearingPlatform> disappearingPlatforms;
+  final List<TestPortal> testPortals;
+  final List<Component> _stageComponents = [];
   late final Sprite _backgroundSprite;
   late final Sprite _blockTopLeftSprite;
   late final Sprite _blockTopSprite;
@@ -55,114 +64,29 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
   late final Sprite _platformLeftSprite;
   late final Sprite _platformMiddleSprite;
   late final Sprite _platformRightSprite;
-  late final ExitGate exitGate;
-  late final List<Vector2> _coinSpawnPoints;
-  late final List<Vector2> _spikeSpawnPoints;
-  late final List<Vector2> _sawSpawnPoints;
-  late final List<Checkpoint> _checkpointDefinitions;
-  late final List<Vector2> _springSpawnPoints;
-  late final List<MovingPlatform> _movingPlatformDefinitions;
+  late final SpriteComponent _background;
+  late ExitGate exitGate;
+  LevelData? _overrideStageData;
+  int _currentStageIndex = 0;
 
   double get worldWidth => GameConstants.levelWidth;
   double get worldHeight => GameConstants.levelHeight;
+  int get totalStages => _overrideStageData != null ? 1 : gameLevels.length;
+  int get currentStageNumber => _overrideStageData != null ? 1 : _currentStageIndex + 1;
+  bool get hasNextStage => _overrideStageData == null && _currentStageIndex < totalStages - 1;
+  bool get isHubStage => _overrideStageData != null;
+  LevelData get currentStage => _overrideStageData ?? gameLevels[_currentStageIndex];
 
   @override
   Future<void> onLoad() async {
     await _loadTerrainSprites();
-
-    surfaces = [
-      PlatformSurface(
-        position: Vector2(
-          0,
-          GameConstants.resolution.y - GameConstants.floorHeight,
-        ),
-        size: Vector2(GameConstants.levelWidth, GameConstants.floorHeight),
-      ),
-      PlatformSurface(position: Vector2(120, 540), size: Vector2(220, 28)),
-      PlatformSurface(position: Vector2(420, 455), size: Vector2(210, 28)),
-      PlatformSurface(position: Vector2(760, 365), size: Vector2(180, 28)),
-      PlatformSurface(position: Vector2(1080, 500), size: Vector2(170, 28)),
-      PlatformSurface(position: Vector2(980, 250), size: Vector2(210, 28)),
-      PlatformSurface(position: Vector2(1350, 420), size: Vector2(190, 28)),
-      PlatformSurface(position: Vector2(1625, 330), size: Vector2(200, 28)),
-      PlatformSurface(position: Vector2(1885, 250), size: Vector2(170, 28)),
-    ];
-
-    _coinSpawnPoints = [
-      Vector2(195, 490),
-      Vector2(500, 405),
-      Vector2(825, 315),
-      Vector2(1140, 450),
-      Vector2(1060, 200),
-      Vector2(1425, 370),
-      Vector2(1700, 280),
-      Vector2(1935, 200),
-    ];
-
-    _spikeSpawnPoints = [
-      Vector2(620, GameConstants.resolution.y - GameConstants.floorHeight - 30),
-      Vector2(1280, GameConstants.resolution.y - GameConstants.floorHeight - 30),
-      Vector2(1540, 390),
-    ];
-
-    _sawSpawnPoints = [
-      Vector2(1098, 468),
-      Vector2(1910, 218),
-    ];
-
-    _checkpointDefinitions = [
-      Checkpoint(
-        position: Vector2(900, 301),
-        size: Vector2(24, 64),
-        respawnPosition: Vector2(840, 317),
-      ),
-      Checkpoint(
-        position: Vector2(1760, 266),
-        size: Vector2(24, 64),
-        respawnPosition: Vector2(1700, 282),
-      ),
-    ];
-
-    _springSpawnPoints = [
-      Vector2(700, 333),
-      Vector2(1490, 388),
-    ];
-
-    _movingPlatformDefinitions = [
-      MovingPlatform(
-        position: Vector2(560, 285),
-        size: Vector2(96, 24),
-        startPosition: Vector2(560, 285),
-        travelDistance: 90,
-        speed: 1.8,
-      ),
-      MovingPlatform(
-        position: Vector2(1180, 160),
-        size: Vector2(96, 24),
-        startPosition: Vector2(1180, 160),
-        travelDistance: 110,
-        speed: 1.4,
-      ),
-    ];
-
-    _addBackground();
-    _buildTerrainVisuals();
-
-    exitGate = ExitGate(
-      position: Vector2(
-        GameConstants.levelWidth - 120,
-        GameConstants.resolution.y - GameConstants.floorHeight - 64,
-      ),
-      size: Vector2(48, 64),
+    _background = SpriteComponent(
+      sprite: _backgroundSprite,
+      position: Vector2.zero(),
+      size: Vector2(worldWidth, worldHeight),
+      priority: -100,
     );
-
-    add(exitGate);
-    spawnCoins();
-    spawnSpikes();
-    spawnSaws();
-    spawnCheckpoints();
-    spawnSprings();
-    spawnMovingPlatforms();
+    add(_background);
   }
 
   Future<void> _loadTerrainSprites() async {
@@ -181,17 +105,6 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
     _platformRightSprite = await game.loadSprite(ImageAssets.terrainGrassHorizontalRight);
   }
 
-  void _addBackground() {
-    add(
-      SpriteComponent(
-        sprite: _backgroundSprite,
-        position: Vector2.zero(),
-        size: Vector2(worldWidth, worldHeight),
-        priority: -100,
-      ),
-    );
-  }
-
   void _buildTerrainVisuals() {
     for (var i = 0; i < surfaces.length; i++) {
       final surface = surfaces[i];
@@ -201,6 +114,7 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
         _addFloatingSurfaceVisual(surface);
       }
     }
+
   }
 
   void _addGroundSurfaceVisual(PlatformSurface surface) {
@@ -215,7 +129,8 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
         final isRight = column == columns - 1;
 
         add(
-          SpriteComponent(
+          _trackStageComponent(
+            SpriteComponent(
             sprite: _groundSpriteFor(isTop, isBottom, isLeft, isRight),
             position: Vector2(
               surface.position.x + column * _tileSize,
@@ -223,6 +138,7 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
             ),
             size: Vector2(_tileSize, _tileSize),
             priority: -20,
+            ),
           ),
         );
       }
@@ -241,11 +157,13 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
       };
 
       add(
-        SpriteComponent(
+        _trackStageComponent(
+          SpriteComponent(
           sprite: sprite,
           position: Vector2(surface.position.x + column * _tileSize, top),
           size: Vector2(_tileSize, _tileSize),
           priority: -20,
+          ),
         ),
       );
     }
@@ -284,45 +202,171 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
     return _blockCenterSprite;
   }
 
-  int get totalCoins => _coinSpawnPoints.length;
+  int get totalCoins => currentStage.coinSpawnPoints.length;
+
+  Vector2 get playerSpawn => currentStage.playerSpawn.clone();
+
+  Component _trackStageComponent(Component component) {
+    _stageComponents.add(component);
+    return component;
+  }
+
+  Future<void> loadStage(int stageIndex) async {
+    _clearStageComponents();
+    _overrideStageData = null;
+    _currentStageIndex = stageIndex;
+    surfaces = currentStage.surfaces
+        .map((surface) => PlatformSurface(
+              position: surface.position.clone(),
+              size: surface.size.clone(),
+            ))
+        .toList();
+
+    _buildTerrainVisuals();
+
+    exitGate = ExitGate(
+      position: currentStage.exitPosition.clone(),
+      size: Vector2(48, 64),
+    );
+    add(_trackStageComponent(exitGate));
+    spawnCoins();
+    spawnHearts();
+    spawnStars();
+    spawnSpikes();
+    spawnSaws();
+    spawnCheckpoints();
+    spawnSprings();
+    spawnWalls();
+    spawnMovingPlatforms();
+    spawnVerticalMovingPlatforms();
+    spawnDisappearingPlatforms();
+    spawnTestPortals();
+  }
+
+  Future<void> loadHubStage(LevelData stageData) async {
+    await _loadOverrideStage(stageData);
+  }
+
+  Future<void> loadCustomStage(LevelData stageData) async {
+    await _loadOverrideStage(stageData);
+  }
+
+  Future<void> _loadOverrideStage(LevelData stageData) async {
+    _clearStageComponents();
+    _overrideStageData = stageData;
+    surfaces = currentStage.surfaces
+        .map((surface) => PlatformSurface(
+              position: surface.position.clone(),
+              size: surface.size.clone(),
+            ))
+        .toList();
+
+    _buildTerrainVisuals();
+
+    exitGate = ExitGate(
+      position: currentStage.exitPosition.clone(),
+      size: Vector2(48, 64),
+    );
+    add(_trackStageComponent(exitGate));
+    spawnCoins();
+    spawnHearts();
+    spawnStars();
+    spawnSpikes();
+    spawnSaws();
+    spawnCheckpoints();
+    spawnSprings();
+    spawnWalls();
+    spawnMovingPlatforms();
+    spawnVerticalMovingPlatforms();
+    spawnDisappearingPlatforms();
+    spawnTestPortals();
+  }
+
+  Future<void> loadNextStage() async {
+    if (!hasNextStage) {
+      return;
+    }
+    await loadStage(_currentStageIndex + 1);
+  }
+
+  void _clearStageComponents() {
+    for (final component in _stageComponents) {
+      component.removeFromParent();
+    }
+    _stageComponents.clear();
+    coins.clear();
+    hearts.clear();
+    stars.clear();
+    spikes.clear();
+    saws.clear();
+    checkpoints.clear();
+    springs.clear();
+    walls.clear();
+    movingPlatforms.clear();
+    verticalMovingPlatforms.clear();
+    disappearingPlatforms.clear();
+    testPortals.clear();
+  }
 
   void spawnCoins() {
     coins.clear();
 
-    for (final spawnPoint in _coinSpawnPoints) {
+    for (final spawnPoint in currentStage.coinSpawnPoints) {
       final coin = Coin(position: spawnPoint.clone(), size: Vector2.all(22));
 
       coins.add(coin);
-      add(coin);
+      add(_trackStageComponent(coin));
+    }
+  }
+
+  void spawnHearts() {
+    hearts.clear();
+
+    for (final spawnPoint in currentStage.heartSpawnPoints) {
+      final heart = HeartPickup(position: spawnPoint.clone(), size: Vector2.all(28));
+
+      hearts.add(heart);
+      add(_trackStageComponent(heart));
+    }
+  }
+
+  void spawnStars() {
+    stars.clear();
+
+    for (final spawnPoint in currentStage.starSpawnPoints) {
+      final star = StarPickup(position: spawnPoint.clone(), size: Vector2.all(30));
+
+      stars.add(star);
+      add(_trackStageComponent(star));
     }
   }
 
   void spawnSpikes() {
     spikes.clear();
 
-    for (final spawnPoint in _spikeSpawnPoints) {
+    for (final spawnPoint in currentStage.spikeSpawnPoints) {
       final spike = Spike(position: spawnPoint.clone(), size: Vector2(32, 30));
 
       spikes.add(spike);
-      add(spike);
+      add(_trackStageComponent(spike));
     }
   }
 
   void spawnSaws() {
     saws.clear();
 
-    for (final spawnPoint in _sawSpawnPoints) {
+    for (final spawnPoint in currentStage.sawSpawnPoints) {
       final saw = Saw(position: spawnPoint.clone(), size: Vector2.all(34));
 
       saws.add(saw);
-      add(saw);
+      add(_trackStageComponent(saw));
     }
   }
 
   void spawnCheckpoints() {
     checkpoints.clear();
 
-    for (final definition in _checkpointDefinitions) {
+    for (final definition in currentStage.checkpoints) {
       final checkpoint = Checkpoint(
         position: definition.position.clone(),
         size: definition.size.clone(),
@@ -330,26 +374,41 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
       );
 
       checkpoints.add(checkpoint);
-      add(checkpoint);
+      add(_trackStageComponent(checkpoint));
     }
   }
 
   void spawnSprings() {
     springs.clear();
 
-    for (final spawnPoint in _springSpawnPoints) {
+    for (final spawnPoint in currentStage.springSpawnPoints) {
       final spring = Spring(position: spawnPoint.clone(), size: Vector2(32, 32));
       springs.add(spring);
-      add(spring);
+      add(_trackStageComponent(spring));
+    }
+  }
+
+  void spawnWalls() {
+    walls.clear();
+
+    for (final definition in currentStage.walls) {
+      final wall = StoneWall(
+        position: definition.position.clone(),
+        size: definition.size.clone(),
+        variant: definition.variant,
+      );
+
+      walls.add(wall);
+      add(_trackStageComponent(wall));
     }
   }
 
   void spawnMovingPlatforms() {
     movingPlatforms.clear();
 
-    for (final definition in _movingPlatformDefinitions) {
+    for (final definition in currentStage.movingPlatforms) {
       final platform = MovingPlatform(
-        position: definition.startPosition.clone(),
+        position: definition.position.clone(),
         size: definition.size.clone(),
         startPosition: definition.startPosition.clone(),
         travelDistance: definition.travelDistance,
@@ -357,20 +416,68 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
       );
 
       movingPlatforms.add(platform);
-      add(platform);
+      add(_trackStageComponent(platform));
     }
   }
 
-  void resetState() {
-    for (final coin in coins) {
-      coin.removeFromParent();
+  void spawnVerticalMovingPlatforms() {
+    verticalMovingPlatforms.clear();
+
+    for (final definition in currentStage.verticalMovingPlatforms) {
+      final platform = VerticalMovingPlatform(
+        position: definition.position.clone(),
+        size: definition.size.clone(),
+        startPosition: definition.startPosition.clone(),
+        travelDistance: definition.travelDistance,
+        speed: definition.speed,
+        startsMovingUp: definition.startsMovingUp,
+      );
+
+      verticalMovingPlatforms.add(platform);
+      add(_trackStageComponent(platform));
+    }
+  }
+
+  void spawnDisappearingPlatforms() {
+    disappearingPlatforms.clear();
+
+    for (final definition in currentStage.disappearingPlatforms) {
+      final platform = DisappearingPlatform(
+        position: definition.position.clone(),
+        size: definition.size.clone(),
+        collapseDelay: definition.collapseDelay,
+        respawnDelay: definition.respawnDelay,
+      );
+
+      disappearingPlatforms.add(platform);
+      add(_trackStageComponent(platform));
+    }
+  }
+
+  void spawnTestPortals() {
+    testPortals.clear();
+
+    for (final definition in currentStage.testPortals) {
+      final portal = TestPortal(
+        position: definition.position.clone(),
+        size: definition.size.clone(),
+        targetStageIndex: definition.targetStageIndex,
+      );
+
+      testPortals.add(portal);
+      add(_trackStageComponent(portal));
+    }
+  }
+
+  Future<void> resetState() async {
+    _clearStageComponents();
+    surfaces = [];
+    final overrideStageData = _overrideStageData;
+    if (overrideStageData != null) {
+      await loadCustomStage(overrideStageData);
+      return;
     }
 
-    for (final checkpoint in checkpoints) {
-      checkpoint.deactivate();
-    }
-
-    exitGate.resetGate();
-    spawnCoins();
+    await loadStage(_currentStageIndex);
   }
 }

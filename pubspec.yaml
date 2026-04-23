@@ -69,6 +69,9 @@ flutter:
     - assets/images/props/
     - assets/images/ui/
     - assets/audio/sfx/
+    - assets/mobile-controls/Sprites/Style G/Default/joystick_circle_pad_a.png
+    - assets/mobile-controls/Sprites/Style G/Default/joystick_circle_nub_a.png
+    - assets/mobile-controls/Sprites/Style G/Default/button_circle.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

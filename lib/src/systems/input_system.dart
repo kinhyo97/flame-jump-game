@@ -4,6 +4,7 @@ class InputSystem {
   bool jumpPressed = false;
   bool moveLeftHeld = false;
   bool moveRightHeld = false;
+  double _touchHorizontal = 0;
 
   void resetFrameInput() {
     jumpPressed = false;
@@ -23,7 +24,20 @@ class InputSystem {
     jumpPressed = true;
   }
 
+  void setTouchHorizontal(double value) {
+    _touchHorizontal = value.clamp(-1.0, 1.0);
+    _syncHorizontal();
+  }
+
   void _syncHorizontal() {
-    horizontal = (moveRightHeld ? 1.0 : 0.0) - (moveLeftHeld ? 1.0 : 0.0);
+    final keyboardHorizontal =
+        (moveRightHeld ? 1.0 : 0.0) - (moveLeftHeld ? 1.0 : 0.0);
+
+    if (_touchHorizontal.abs() > 0.01) {
+      horizontal = _touchHorizontal;
+      return;
+    }
+
+    horizontal = keyboardHorizontal;
   }
 }

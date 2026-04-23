@@ -32,5 +32,10 @@ class Saw extends Hazard with HasGameReference<JumpGame> {
   }
 
   @override
-  Rect get bounds => Rect.fromLTWH(position.x, position.y, size.x, size.y);
+  Rect get bounds => Rect.fromLTWH(
+    position.x + 5,
+    position.y + 5,
+    size.x - 10,
+    size.y - 10,
+  );
 }
