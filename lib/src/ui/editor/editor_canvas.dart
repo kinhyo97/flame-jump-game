@@ -15,6 +15,7 @@ class EditorCanvas extends StatelessWidget {
   const EditorCanvas({
     super.key,
     required this.transformationController,
+    required this.worldWidth,
     required this.surfaces,
     required this.pointObjects,
     required this.checkpoints,
@@ -38,6 +39,7 @@ class EditorCanvas extends StatelessWidget {
   });
 
   final TransformationController transformationController;
+  final double worldWidth;
   final List<PlatformSurface> surfaces;
   final Map<EditorTool, List<Vector2>> pointObjects;
   final List<CheckpointData> checkpoints;
@@ -67,50 +69,52 @@ class EditorCanvas extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
-        child: MouseRegion(
-          cursor: currentTool == EditorTool.cursor
-              ? SystemMouseCursors.basic
-              : SystemMouseCursors.precise,
-          onHover: (event) {
-            if (currentTool == EditorTool.cursor) {
-              return;
-            }
-            onCanvasHover(event.localPosition);
-          },
-          onExit: (_) => onCanvasExit(),
-          child: Listener(
-            onPointerDown: (event) {
-              if (currentTool == EditorTool.cursor) {
-                onSelectionDragStart(event.localPosition);
-              }
-            },
-            onPointerMove: (event) {
-              if (currentTool == EditorTool.cursor) {
-                onSelectionDragUpdate(event.localPosition);
-              }
-            },
-            onPointerUp: (event) {
-              if (currentTool == EditorTool.cursor) {
-                onSelectionDragEnd(event.localPosition);
-              }
-            },
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: currentTool == EditorTool.cursor
-                  ? null
-                  : (details) => onCanvasTap(details.localPosition),
-              child: InteractiveViewer(
-              transformationController: transformationController,
-              boundaryMargin: const EdgeInsets.all(120),
-              minScale: 0.28,
-              maxScale: 2.4,
-              panEnabled: false,
-              constrained: false,
-                child: SizedBox(
-                  width: EditorConstants.worldWidth,
-                  height: EditorConstants.worldHeight,
-                  child: Stack(
-                    children: [
+        child: Stack(
+          children: [
+            MouseRegion(
+              cursor: currentTool == EditorTool.cursor
+                  ? SystemMouseCursors.basic
+                  : SystemMouseCursors.precise,
+              onHover: (event) {
+                if (currentTool == EditorTool.cursor) {
+                  return;
+                }
+                onCanvasHover(event.localPosition);
+              },
+              onExit: (_) => onCanvasExit(),
+              child: Listener(
+                onPointerDown: (event) {
+                  if (currentTool == EditorTool.cursor) {
+                    onSelectionDragStart(event.localPosition);
+                  }
+                },
+                onPointerMove: (event) {
+                  if (currentTool == EditorTool.cursor) {
+                    onSelectionDragUpdate(event.localPosition);
+                  }
+                },
+                onPointerUp: (event) {
+                  if (currentTool == EditorTool.cursor) {
+                    onSelectionDragEnd(event.localPosition);
+                  }
+                },
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapUp: currentTool == EditorTool.cursor
+                      ? null
+                      : (details) => onCanvasTap(details.localPosition),
+                  child: InteractiveViewer(
+                    transformationController: transformationController,
+                    boundaryMargin: const EdgeInsets.all(120),
+                    minScale: 0.28,
+                    maxScale: 2.4,
+                    panEnabled: false,
+                    constrained: false,
+                    child: SizedBox(
+                      width: worldWidth,
+                      height: EditorConstants.worldHeight,
+                      child: Stack(
+                        children: [
                       Container(
                         color: const Color(0xFF9FC5E8),
                         child: const CustomPaint(
@@ -142,10 +146,12 @@ class EditorCanvas extends StatelessWidget {
                           color: const Color(0xFF2FC46B),
                         ),
                       ),
-                      const Positioned(
+                      Positioned(
                         left: 32,
                         top: 24,
-                        child: CanvasBadge('World 2240 x 720'),
+                        child: CanvasBadge(
+                          'World ${worldWidth.toInt()} x ${EditorConstants.worldHeight.toInt()}',
+                        ),
                       ),
                       Positioned(
                         left: 32,
@@ -274,12 +280,14 @@ class EditorCanvas extends StatelessWidget {
                             ),
                           ),
                         ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

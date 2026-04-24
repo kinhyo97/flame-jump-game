@@ -69,7 +69,7 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
   LevelData? _overrideStageData;
   int _currentStageIndex = 0;
 
-  double get worldWidth => GameConstants.levelWidth;
+  double get worldWidth => currentStage.worldWidth;
   double get worldHeight => GameConstants.levelHeight;
   int get totalStages => _overrideStageData != null ? 1 : gameLevels.length;
   int get currentStageNumber => _overrideStageData != null ? 1 : _currentStageIndex + 1;
@@ -221,6 +221,7 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
               size: surface.size.clone(),
             ))
         .toList();
+    _background.size = Vector2(worldWidth, worldHeight);
 
     _buildTerrainVisuals();
 
@@ -260,6 +261,7 @@ class Level extends PositionComponent with HasGameReference<JumpGame> {
               size: surface.size.clone(),
             ))
         .toList();
+    _background.size = Vector2(worldWidth, worldHeight);
 
     _buildTerrainVisuals();
 

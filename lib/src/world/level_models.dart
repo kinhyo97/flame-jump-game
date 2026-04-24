@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 
+import '../core/constants.dart';
 import 'platform_surface.dart';
 
 class MovingPlatformData {
@@ -95,6 +96,7 @@ class TestPortalData {
 
 class LevelData {
   const LevelData({
+    this.worldWidth = GameConstants.levelWidth,
     required this.playerSpawn,
     required this.exitPosition,
     required this.surfaces,
@@ -112,6 +114,7 @@ class LevelData {
     this.testPortals = const [],
   });
 
+  final double worldWidth;
   final Vector2 playerSpawn;
   final Vector2 exitPosition;
   final List<PlatformSurface> surfaces;

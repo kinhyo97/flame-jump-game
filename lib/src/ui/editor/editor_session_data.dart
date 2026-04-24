@@ -5,6 +5,7 @@ import '../../world/platform_surface.dart';
 
 class EditorSessionData {
   EditorSessionData({
+    required this.worldWidth,
     required this.surfaces,
     required this.coins,
     required this.hearts,
@@ -17,6 +18,7 @@ class EditorSessionData {
     required this.disappearingPlatforms,
   });
 
+  final double worldWidth;
   final List<PlatformSurface> surfaces;
   final List<Vector2> coins;
   final List<Vector2> hearts;

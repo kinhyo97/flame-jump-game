@@ -28,6 +28,7 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   static const _viewportNudgeStep = 96.0;
+  static const _worldWidthStep = 160.0;
 
   late final TransformationController _transformationController;
   late final List<PlatformSurface> _surfaces;
@@ -35,6 +36,7 @@ class _EditorScreenState extends State<EditorScreen> {
   late final List<CheckpointData> _checkpoints;
   late final List<WallData> _walls;
   late final List<DisappearingPlatformData> _disappearingPlatforms;
+  late double _worldWidth;
 
   PlatformSurface? _previewSurface;
   Vector2? _previewPointObject;
@@ -47,7 +49,7 @@ class _EditorScreenState extends State<EditorScreen> {
   final List<EditorSelection> _selectedObjects = [];
   Offset? _selectionDragStart;
   Offset? _selectionDragCurrent;
-  String _loadedMapLabel = 'Draft';
+  String _loadedMapLabel = 'Draft Map';
 
   @override
   void initState() {
@@ -55,6 +57,7 @@ class _EditorScreenState extends State<EditorScreen> {
     _transformationController = TransformationController();
 
     final restoredSession = restoreEditorSession(EditorDraftStore.currentLevel);
+    _worldWidth = restoredSession.worldWidth;
     _surfaces = restoredSession.surfaces;
     _pointObjects = {
       EditorTool.coin: restoredSession.coins,
@@ -101,6 +104,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _disappearingPlatforms
         ..clear()
         ..addAll(session.disappearingPlatforms);
+      _worldWidth = session.worldWidth;
       _previewSurface = null;
       _previewPointObject = null;
       _previewCheckpoint = null;
@@ -125,6 +129,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   LevelData _buildCurrentDraftLevel() {
     return buildDraftLevelData(
+      worldWidth: _worldWidth,
       surfaces: _surfaces,
       coins: _pointObjectList(EditorTool.coin),
       hearts: _pointObjectList(EditorTool.heart),
@@ -243,7 +248,7 @@ class _EditorScreenState extends State<EditorScreen> {
         return AlertDialog(
           backgroundColor: const Color(0xFF182334),
           title: const Text(
-            'Load Map',
+            'Load Round',
             style: TextStyle(color: Colors.white),
           ),
           content: SizedBox(
@@ -262,6 +267,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     _applySession(
                       restoreEditorSession(
                         buildDraftLevelData(
+                          worldWidth: EditorConstants.defaultWorldWidth,
                           surfaces: const [],
                           coins: const [],
                           hearts: const [],
@@ -276,7 +282,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
                     );
                     setState(() {
-                      _loadedMapLabel = 'New Draft';
+                      _loadedMapLabel = 'Draft Map';
                     });
                     Navigator.of(dialogContext).pop();
                   },
@@ -288,11 +294,11 @@ class _EditorScreenState extends State<EditorScreen> {
                     onPressed: () {
                       _applyNamedSession(
                         restoreEditorSession(gameLevels[i]),
-                        'Level ${i + 1}',
+                        'Round ${i + 1}',
                       );
                       Navigator.of(dialogContext).pop();
                     },
-                    child: Text('Load Level ${i + 1}'),
+                    child: Text('Load Round ${i + 1}'),
                   ),
                   const SizedBox(height: 10),
                 ],
@@ -383,7 +389,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
                 _applySession(restoreEditorSession(parsedLevel));
                 setState(() {
-                  _loadedMapLabel = 'Imported Map';
+                  _loadedMapLabel = 'Imported Round';
                 });
                 Navigator.of(dialogContext).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -498,7 +504,7 @@ class _EditorScreenState extends State<EditorScreen> {
         ((scenePoint.dy - EditorConstants.gridYOffset) / snapStep).floor() *
             snapStep +
         EditorConstants.gridYOffset;
-    final maxX = EditorConstants.worldWidth - width;
+    final maxX = _worldWidth - width;
     final maxY = EditorConstants.worldHeight - height;
 
     return Vector2(
@@ -518,7 +524,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 .floor() *
             EditorConstants.tileSize +
         EditorConstants.gridYOffset;
-    final maxX = EditorConstants.worldWidth - EditorConstants.newSurfaceWidth;
+    final maxX = _worldWidth - EditorConstants.newSurfaceWidth;
     final maxY = EditorConstants.worldHeight - EditorConstants.newSurfaceHeight;
 
     return PlatformSurface(
@@ -555,7 +561,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final respawnPosition = Vector2(
       (position.x - 60).clamp(
         0.0,
-        EditorConstants.worldWidth - PlayerConstants.size.x,
+        _worldWidth - PlayerConstants.size.x,
       ),
       (position.y + 16).clamp(
         0.0,
@@ -571,6 +577,82 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
       respawnPosition: respawnPosition,
     );
+  }
+
+  double get _minimumWorldWidthForContent {
+    var maxRight = EditorConstants.minWorldWidth;
+
+    for (final surface in _surfaces) {
+      final right = surface.position.x + surface.size.x;
+      if (right > maxRight) {
+        maxRight = right;
+      }
+    }
+
+    for (final definition in editorPointObjectDefinitions) {
+      for (final point in _pointObjectList(definition.tool)) {
+        final right = point.x + definition.width;
+        if (right > maxRight) {
+          maxRight = right;
+        }
+      }
+    }
+
+    for (final checkpoint in _checkpoints) {
+      final right = checkpoint.position.x + checkpoint.size.x;
+      if (right > maxRight) {
+        maxRight = right;
+      }
+    }
+
+    for (final wall in _walls) {
+      final right = wall.position.x + wall.size.x;
+      if (right > maxRight) {
+        maxRight = right;
+      }
+    }
+
+    for (final platform in _disappearingPlatforms) {
+      final right = platform.position.x + platform.size.x;
+      if (right > maxRight) {
+        maxRight = right;
+      }
+    }
+
+    return (maxRight + 160)
+        .clamp(EditorConstants.minWorldWidth, EditorConstants.maxWorldWidth);
+  }
+
+  void _increaseWorldWidth() {
+    final nextWidth = (_worldWidth + _worldWidthStep).clamp(
+      _minimumWorldWidthForContent,
+      EditorConstants.maxWorldWidth,
+    );
+
+    if ((nextWidth - _worldWidth).abs() < 0.1) {
+      return;
+    }
+
+    setState(() {
+      _worldWidth = nextWidth;
+    });
+    _persistDraft();
+  }
+
+  void _decreaseWorldWidth() {
+    final nextWidth = (_worldWidth - _worldWidthStep).clamp(
+      _minimumWorldWidthForContent,
+      EditorConstants.maxWorldWidth,
+    );
+
+    if ((nextWidth - _worldWidth).abs() < 0.1) {
+      return;
+    }
+
+    setState(() {
+      _worldWidth = nextWidth;
+    });
+    _persistDraft();
   }
 
   WallData _buildWall(Offset localPosition) {
@@ -1189,7 +1271,7 @@ class _EditorScreenState extends State<EditorScreen> {
       body: Focus(
         autofocus: true,
         onKeyEvent: (_, event) {
-          if (event is KeyDownEvent) {
+          if (event is KeyDownEvent || event is KeyRepeatEvent) {
             if (event.logicalKey == LogicalKeyboardKey.escape) {
               _setTool(EditorTool.cursor);
               return KeyEventResult.handled;
@@ -1225,17 +1307,9 @@ class _EditorScreenState extends State<EditorScreen> {
               children: [
                 EditorTopToolbar(
                   loadedMapLabel: _loadedMapLabel,
-                  surfaceCount: _surfaces.length,
-                  coinCount: _pointObjectList(EditorTool.coin).length,
-                  heartCount: _pointObjectList(EditorTool.heart).length,
-                  starCount: _pointObjectList(EditorTool.star).length,
-                  spikeCount: _pointObjectList(EditorTool.spike).length,
-                  sawCount: _pointObjectList(EditorTool.saw).length,
-                  checkpointCount: _checkpoints.length,
-                  springCount: _pointObjectList(EditorTool.spring).length,
-                  wallCount: _walls.length,
-                  disappearingPlatformCount: _disappearingPlatforms.length,
-                  currentTool: _currentTool,
+                  worldWidth: _worldWidth.toInt(),
+                  onDecreaseWidthPressed: _decreaseWorldWidth,
+                  onIncreaseWidthPressed: _increaseWorldWidth,
                   onLoadPressed: _showLoadDialog,
                   onImportPressed: _showImportDialog,
                   onExportPressed: _showExportDialog,
@@ -1266,6 +1340,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       Expanded(
                         child: EditorCanvas(
                           transformationController: _transformationController,
+                          worldWidth: _worldWidth,
                           surfaces: _surfaces,
                           pointObjects: _pointObjects,
                           checkpoints: _checkpoints,
@@ -1306,6 +1381,7 @@ class _EditorScreenState extends State<EditorScreen> {
                       ),
                       const SizedBox(width: 14),
                       EditorInspectorPanel(
+                        worldWidth: _worldWidth.toInt(),
                         surfaceCount: _surfaces.length,
                         coinCount: _pointObjectList(EditorTool.coin).length,
                         heartCount: _pointObjectList(EditorTool.heart).length,

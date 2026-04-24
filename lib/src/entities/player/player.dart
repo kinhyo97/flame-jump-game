@@ -7,18 +7,20 @@ import '../../core/constants.dart';
 import '../../game/jump_game.dart';
 import '../base/actor.dart';
 import '../objects/disappearing_platform.dart';
+import 'player_skin.dart';
 import 'player_state.dart';
 
 class Player extends Actor with HasGameReference<JumpGame> {
   static const double _hitboxInsetX = 6;
   static const double _hitboxInsetTop = 10;
   static const double _hitboxInsetBottom = 4;
+  static const double _platformSnapTolerance = 10;
   static const double _respawnRiseDistance = 18;
   static const double _respawnStartScale = 0.86;
   static const double _respawnBlinkInterval = 0.08;
   static const double _invincibleBlinkInterval = 0.1;
 
-  Player()
+  Player({this.skin = PlayerSkin.classic})
     : state = PlayerState.idle,
       _jumpCount = 0,
       super(
@@ -27,53 +29,151 @@ class Player extends Actor with HasGameReference<JumpGame> {
       );
 
   PlayerState state;
+  PlayerSkin skin;
   bool isOnGround = false;
   bool facingLeft = false;
-  Vector2 _groundDelta = Vector2.zero();
+  final Vector2 _groundDelta = Vector2.zero();
   int _jumpCount;
   static const int _maxJumpCount = 2;
 
   SpriteAnimationGroupComponent<PlayerState>? _sprite;
-  late final Map<PlayerState, SpriteAnimation> _animations;
-  Vector2 _previousPosition = Vector2.zero();
+  Map<PlayerState, SpriteAnimation> _animations = {};
+  final Vector2 _previousPosition = Vector2.zero();
+  Rect _cachedBounds = Rect.zero;
   bool _isRespawning = false;
   double _respawnTimer = 0;
   double _respawnDuration = 0;
-  late Vector2 _respawnTargetPosition = Vector2.zero();
+  final Vector2 _respawnTargetPosition = Vector2.zero();
   bool _isInvincible = false;
   double _invincibleTimer = 0;
 
   bool get isRespawning => _isRespawning;
   bool get isInvincible => _isInvincible;
   double get invincibleTimeRemaining => _invincibleTimer;
+  double get _spriteOffsetY => switch (skin) {
+    PlayerSkin.whale => 8,
+    _ => 0,
+  };
+  double get _baseFacingScaleX => switch (skin) {
+    PlayerSkin.whale => -1,
+    _ => 1,
+  };
 
   @override
   Future<void> onLoad() async {
-    _animations = {
-      PlayerState.idle: SpriteAnimation.spriteList([
-        await game.loadSprite(ImageAssets.playerGreenIdle),
-      ], stepTime: 1),
-      PlayerState.run: SpriteAnimation.spriteList([
-        await game.loadSprite(ImageAssets.playerGreenWalkA),
-        await game.loadSprite(ImageAssets.playerGreenWalkB),
-      ], stepTime: 0.12),
-      PlayerState.jump: SpriteAnimation.spriteList([
-        await game.loadSprite(ImageAssets.playerGreenJump),
-      ], stepTime: 1),
-      PlayerState.fall: SpriteAnimation.spriteList([
-        await game.loadSprite(ImageAssets.playerGreenJump),
-      ], stepTime: 1),
-    };
+    await _applySkin(skin);
+    _refreshBounds();
+  }
 
-    _sprite = SpriteAnimationGroupComponent<PlayerState>(
-      position: size / 2,
+  Future<void> setSkin(PlayerSkin nextSkin) async {
+    if (skin == nextSkin && _sprite != null) {
+      return;
+    }
+
+    await _applySkin(nextSkin);
+    _updateSprite();
+  }
+
+  Future<void> _applySkin(PlayerSkin nextSkin) async {
+    skin = nextSkin;
+    _animations = await _loadAnimationsForSkin(nextSkin);
+
+    final previousSprite = _sprite;
+    if (previousSprite != null) {
+      previousSprite.removeFromParent();
+    }
+
+    final nextSprite = SpriteAnimationGroupComponent<PlayerState>(
+      position: Vector2(size.x / 2, (size.y / 2) + _spriteOffsetY),
       size: size,
       anchor: Anchor.center,
       animations: _animations,
-      current: PlayerState.idle,
+      current: state,
     );
 
-    add(_sprite!);
+    _sprite = nextSprite;
+    await add(nextSprite);
+  }
+
+  Future<Map<PlayerState, SpriteAnimation>> _loadAnimationsForSkin(
+    PlayerSkin skin,
+  ) async {
+    switch (skin) {
+      case PlayerSkin.classic:
+        return {
+          PlayerState.idle: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.playerGreenIdle),
+          ], stepTime: 1),
+          PlayerState.run: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.playerGreenWalkA),
+            await game.loadSprite(ImageAssets.playerGreenWalkB),
+          ], stepTime: 0.12),
+          PlayerState.jump: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.playerGreenJump),
+          ], stepTime: 1),
+          PlayerState.fall: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.playerGreenJump),
+          ], stepTime: 1),
+        };
+      case PlayerSkin.whale:
+        return {
+          PlayerState.idle: await _loadSheetAnimation(
+            ImageAssets.whaleIdle,
+            amount: 2,
+            stepTime: 0.3,
+          ),
+          PlayerState.run: await _loadSheetAnimation(
+            ImageAssets.whaleRun,
+            amount: 4,
+            stepTime: 0.1,
+          ),
+          PlayerState.jump: await _loadSheetAnimation(
+            ImageAssets.whaleJump,
+            amount: 1,
+            stepTime: 1,
+          ),
+          PlayerState.fall: await _loadSheetAnimation(
+            ImageAssets.whaleFall,
+            amount: 1,
+            stepTime: 1,
+          ),
+        };
+      case PlayerSkin.bazzi:
+        return {
+          PlayerState.idle: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.bazziFrameIdle0),
+            await game.loadSprite(ImageAssets.bazziFrameIdle1),
+          ], stepTime: 0.3),
+          PlayerState.run: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.bazziFrameRun0),
+            await game.loadSprite(ImageAssets.bazziFrameRun1),
+            await game.loadSprite(ImageAssets.bazziFrameRun2),
+            await game.loadSprite(ImageAssets.bazziFrameRun3),
+          ], stepTime: 0.1),
+          PlayerState.jump: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.bazziFrameJump),
+          ], stepTime: 1),
+          PlayerState.fall: SpriteAnimation.spriteList([
+            await game.loadSprite(ImageAssets.bazziFrameFall),
+          ], stepTime: 1),
+        };
+    }
+  }
+
+  Future<SpriteAnimation> _loadSheetAnimation(
+    String assetPath, {
+    required int amount,
+    required double stepTime,
+  }) async {
+    final image = await game.images.load(assetPath);
+    return SpriteAnimation.fromFrameData(
+      image,
+      SpriteAnimationData.sequenced(
+        amount: amount,
+        stepTime: stepTime,
+        textureSize: Vector2.all(256),
+      ),
+    );
   }
 
   @override
@@ -143,11 +243,12 @@ class Player extends Actor with HasGameReference<JumpGame> {
   }
 
   void _move(double dt) {
-    _previousPosition = position.clone();
+    _previousPosition.setFrom(position);
     position += velocity * dt;
     if (isOnGround) {
       position += _groundDelta;
     }
+    _refreshBounds();
   }
 
   void _resolveFloorCollision() {
@@ -160,8 +261,9 @@ class Player extends Actor with HasGameReference<JumpGame> {
     final currentRight = position.x + size.x;
 
     double? landingTop;
-    Vector2? landingDelta;
     DisappearingPlatform? landingDisappearingPlatform;
+    var landingDeltaX = 0.0;
+    var landingDeltaY = 0.0;
 
     for (final surface in game.level.surfaces) {
       final overlapsHorizontally =
@@ -175,7 +277,8 @@ class Player extends Actor with HasGameReference<JumpGame> {
 
       if (landingTop == null || surface.top < landingTop) {
         landingTop = surface.top;
-        landingDelta = Vector2.zero();
+        landingDeltaX = 0;
+        landingDeltaY = 0;
       }
     }
 
@@ -191,7 +294,8 @@ class Player extends Actor with HasGameReference<JumpGame> {
 
       if (landingTop == null || wall.top < landingTop) {
         landingTop = wall.top;
-        landingDelta = Vector2.zero();
+        landingDeltaX = 0;
+        landingDeltaY = 0;
         landingDisappearingPlatform = null;
       }
     }
@@ -211,7 +315,8 @@ class Player extends Actor with HasGameReference<JumpGame> {
 
       if (landingTop == null || platformTop < landingTop) {
         landingTop = platformTop;
-        landingDelta = platform.delta.clone();
+        landingDeltaX = platform.delta.x;
+        landingDeltaY = platform.delta.y;
       }
     }
 
@@ -220,14 +325,22 @@ class Player extends Actor with HasGameReference<JumpGame> {
           currentRight > platform.left && currentLeft < platform.right;
       final crossedSurfaceTop =
           previousBottom <= platform.top && currentBottom >= platform.top;
+      final ridingPlatform =
+          previousBottom >= platform.top - _platformSnapTolerance &&
+          previousBottom <= platform.top + _platformSnapTolerance &&
+          currentBottom >= platform.top - _platformSnapTolerance &&
+          velocity.y >= 0;
 
-      if (!overlapsHorizontally || !crossedSurfaceTop || velocity.y < 0) {
+      if (!overlapsHorizontally ||
+          (!(crossedSurfaceTop || ridingPlatform)) ||
+          velocity.y < 0) {
         continue;
       }
 
       if (landingTop == null || platform.top < landingTop) {
         landingTop = platform.top;
-        landingDelta = platform.delta.clone();
+        landingDeltaX = platform.delta.x;
+        landingDeltaY = platform.delta.y;
         landingDisappearingPlatform = null;
       }
     }
@@ -248,7 +361,8 @@ class Player extends Actor with HasGameReference<JumpGame> {
 
       if (landingTop == null || platform.top < landingTop) {
         landingTop = platform.top;
-        landingDelta = Vector2.zero();
+        landingDeltaX = 0;
+        landingDeltaY = 0;
         landingDisappearingPlatform = platform;
       }
     }
@@ -258,12 +372,13 @@ class Player extends Actor with HasGameReference<JumpGame> {
     }
 
     position.y = landingTop - size.y;
-    if (landingDelta != null) {
-      _groundDelta = landingDelta;
-    }
+    _groundDelta
+      ..x = landingDeltaX
+      ..y = landingDeltaY;
     velocity.y = 0;
     isOnGround = true;
     _jumpCount = 0;
+    _refreshBounds();
     landingDisappearingPlatform?.onPlayerLanded();
   }
 
@@ -312,6 +427,7 @@ class Player extends Actor with HasGameReference<JumpGame> {
       if (hitFromLeft) {
         position.x = wall.left - size.x;
         velocity.x = 0;
+        _refreshBounds();
         continue;
       }
 
@@ -322,6 +438,7 @@ class Player extends Actor with HasGameReference<JumpGame> {
       if (hitFromRight) {
         position.x = wall.right;
         velocity.x = 0;
+        _refreshBounds();
       }
     }
   }
@@ -333,7 +450,8 @@ class Player extends Actor with HasGameReference<JumpGame> {
     }
 
     sprite.current = _animations.containsKey(state) ? state : PlayerState.idle;
-    sprite.scale.x = facingLeft ? -1 : 1;
+    final horizontalScale = facingLeft ? -_baseFacingScaleX : _baseFacingScaleX;
+    sprite.scale.x = horizontalScale;
     sprite.scale.y = 1;
     sprite.opacity = _isInvincible && _shouldBlinkForInvincibility() ? 0.45 : 1;
   }
@@ -343,18 +461,21 @@ class Player extends Actor with HasGameReference<JumpGame> {
   }
 
   void resetTo(Vector2 spawnPosition) {
-    position = spawnPosition.clone();
+    position.setFrom(spawnPosition);
     velocity.setZero();
-    _previousPosition = position.clone();
+    _previousPosition.setFrom(position);
     _groundDelta.setZero();
     _isRespawning = false;
+    _isInvincible = false;
+    _invincibleTimer = 0;
     _respawnTimer = 0;
     _respawnDuration = 0;
-    _respawnTargetPosition = spawnPosition.clone();
+    _respawnTargetPosition.setFrom(spawnPosition);
     state = PlayerState.idle;
     isOnGround = false;
     facingLeft = false;
     _jumpCount = 0;
+    _refreshBounds();
     _updateSprite();
   }
 
@@ -369,7 +490,7 @@ class Player extends Actor with HasGameReference<JumpGame> {
     _isRespawning = true;
     _respawnTimer = 0;
     _respawnDuration = duration;
-    _respawnTargetPosition = spawnPosition.clone();
+    _respawnTargetPosition.setFrom(spawnPosition);
     _applyRespawnVisuals(0);
   }
 
@@ -392,15 +513,17 @@ class Player extends Actor with HasGameReference<JumpGame> {
     }
 
     final riseOffset = (1 - progress) * _respawnRiseDistance;
-    position = Vector2(
+    position.setValues(
       _respawnTargetPosition.x,
       _respawnTargetPosition.y - riseOffset,
     );
-    _previousPosition = position.clone();
+    _previousPosition.setFrom(position);
+    _refreshBounds();
 
     final visualScale =
         _respawnStartScale + ((1 - _respawnStartScale) * progress);
-    sprite.scale.x = facingLeft ? -visualScale : visualScale;
+    final horizontalScale = facingLeft ? -_baseFacingScaleX : _baseFacingScaleX;
+    sprite.scale.x = horizontalScale * visualScale;
     sprite.scale.y = visualScale;
 
     final blinkFrame = (_respawnTimer / _respawnBlinkInterval).floor();
@@ -432,10 +555,14 @@ class Player extends Actor with HasGameReference<JumpGame> {
     game.playJumpSound();
   }
 
-  Rect get bounds => Rect.fromLTWH(
-    position.x + _hitboxInsetX,
-    position.y + _hitboxInsetTop,
-    size.x - (_hitboxInsetX * 2),
-    size.y - _hitboxInsetTop - _hitboxInsetBottom,
-  );
+  void _refreshBounds() {
+    _cachedBounds = Rect.fromLTWH(
+      position.x + _hitboxInsetX,
+      position.y + _hitboxInsetTop,
+      size.x - (_hitboxInsetX * 2),
+      size.y - _hitboxInsetTop - _hitboxInsetBottom,
+    );
+  }
+
+  Rect get bounds => _cachedBounds;
 }

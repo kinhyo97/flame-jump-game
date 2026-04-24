@@ -12,6 +12,7 @@ import '../core/assets.dart';
 import '../core/constants.dart';
 import '../ui/hud.dart';
 import '../entities/player/player.dart';
+import '../entities/player/player_skin.dart';
 import '../systems/audio_system.dart';
 import '../systems/collision_system.dart';
 import '../systems/input_system.dart';
@@ -62,6 +63,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
   final CollisionSystem collisionSystem;
   final AudioSystem audioSystem = AudioSystem();
   final Completer<void> _bootCompleter = Completer<void>();
+  PlayerSkin _selectedSkin = PlayerSkin.classic;
 
   late final Level level;
   late final Player player;
@@ -77,6 +79,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
   bool get shouldRetryCurrentStageOnClear =>
       _isMapTestStage || _customStageData != null;
   Future<void> get bootReady => _bootCompleter.future;
+  PlayerSkin get selectedSkin => _selectedSkin;
 
   @override
   Color backgroundColor() => const Color(GameConstants.backgroundColor);
@@ -89,7 +92,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
     );
 
     level = Level();
-    player = Player();
+    player = Player(skin: _selectedSkin);
     hud = Hud();
 
     await world.add(level);
@@ -116,15 +119,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
       hurtAsset: AudioAssets.hurt,
     );
 
-    camera.setBounds(
-      Rect.fromLTWH(
-        0,
-        0,
-        level.worldWidth,
-        level.worldHeight,
-      ).toFlameRectangle(),
-      considerViewport: true,
-    );
+    _syncCameraBounds();
     camera.follow(
       player,
       horizontalOnly: true,
@@ -145,6 +140,19 @@ class JumpGame extends FlameGame with KeyboardEvents {
 
   void startGameplay() {
     resumeEngine();
+  }
+
+  Future<void> setPlayerSkin(PlayerSkin skin) async {
+    final safeSkin = availablePlayerSkins.contains(skin)
+        ? skin
+        : PlayerSkin.classic;
+    _selectedSkin = safeSkin;
+
+    if (!isLoaded) {
+      return;
+    }
+
+    await player.setSkin(safeSkin);
   }
 
   @override
@@ -227,14 +235,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
         continue;
       }
 
-      final coinBounds = Rect.fromLTWH(
-        coin.position.x,
-        coin.position.y,
-        coin.size.x,
-        coin.size.y,
-      );
-
-      if (!playerBounds.overlaps(coinBounds)) {
+      if (!playerBounds.overlaps(coin.bounds)) {
         continue;
       }
 
@@ -256,14 +257,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
         continue;
       }
 
-      final heartBounds = Rect.fromLTWH(
-        heart.position.x,
-        heart.position.y,
-        heart.size.x,
-        heart.size.y,
-      );
-
-      if (!playerBounds.overlaps(heartBounds)) {
+      if (!playerBounds.overlaps(heart.bounds)) {
         continue;
       }
 
@@ -281,14 +275,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
         continue;
       }
 
-      final starBounds = Rect.fromLTWH(
-        star.position.x,
-        star.position.y,
-        star.size.x,
-        star.size.y,
-      );
-
-      if (!playerBounds.overlaps(starBounds)) {
+      if (!playerBounds.overlaps(star.bounds)) {
         continue;
       }
 
@@ -355,6 +342,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
     isLevelCleared = false;
     isGameOver = false;
     await level.resetState();
+    _syncCameraBounds();
     _respawnPosition = level.playerSpawn;
     player.reset();
     camera.viewfinder.position = player.position.clone();
@@ -381,6 +369,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
     isLevelCleared = false;
     isGameOver = false;
     await level.loadNextStage();
+    _syncCameraBounds();
     _respawnPosition = level.playerSpawn;
     player.resetTo(_respawnPosition);
     camera.viewfinder.position = player.position.clone();
@@ -403,6 +392,7 @@ class JumpGame extends FlameGame with KeyboardEvents {
     isLevelCleared = false;
     isGameOver = false;
     await level.loadStage(0);
+    _syncCameraBounds();
     _respawnPosition = level.playerSpawn;
     player.resetTo(_respawnPosition);
     camera.viewfinder.position = player.position.clone();
@@ -431,6 +421,18 @@ class JumpGame extends FlameGame with KeyboardEvents {
     hud.setLivesCount(livesRemaining);
     hud.setInvincibilityTime(player.invincibleTimeRemaining);
     hud.setExitLocked(level.totalCoins - coinsCollected);
+  }
+
+  void _syncCameraBounds() {
+    camera.setBounds(
+      Rect.fromLTWH(
+        0,
+        0,
+        level.worldWidth,
+        level.worldHeight,
+      ).toFlameRectangle(),
+      considerViewport: true,
+    );
   }
 
   void playJumpSound() {

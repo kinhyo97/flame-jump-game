@@ -11,6 +11,7 @@ String buildLevelDataExport({
     ..writeln("import '../platform_surface.dart';")
     ..writeln()
     ..writeln('final LevelData $variableName = LevelData(')
+    ..writeln('  worldWidth: ${_double(level.worldWidth)},')
     ..writeln('  playerSpawn: ${_vector(level.playerSpawn)},')
     ..writeln('  exitPosition: ${_vector(level.exitPosition)},')
     ..writeln('  surfaces: [');

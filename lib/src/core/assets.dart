@@ -39,6 +39,24 @@ final class ImageAssets {
   static const playerGreenJump = 'player/character_green_jump.png';
   static const playerGreenWalkA = 'player/character_green_walk_a.png';
   static const playerGreenWalkB = 'player/character_green_walk_b.png';
+  static const playerGreenFront = 'player/character_green_front.png';
+  static const whaleIdle = 'player/whale_idle_256px.png';
+  static const whaleRun = 'player/whale_run_256px.png';
+  static const whaleJump = 'player/whale_jump_256px.png';
+  static const whaleFall = 'player/whale_fall_256px.png';
+
+  static const bazziIdle = 'player/bazzi/bazzi_idle.png';
+  static const bazziRun = 'player/bazzi/bazzi_run.png';
+  static const bazziJump = 'player/bazzi/bazzi_jump.png';
+  static const bazziFall = 'player/bazzi/bazzi_fall.png';
+  static const bazziFrameIdle0 = 'player/bazzi/frames/idle_0.png';
+  static const bazziFrameIdle1 = 'player/bazzi/frames/idle_1.png';
+  static const bazziFrameRun0 = 'player/bazzi/frames/run_0.png';
+  static const bazziFrameRun1 = 'player/bazzi/frames/run_1.png';
+  static const bazziFrameRun2 = 'player/bazzi/frames/run_2.png';
+  static const bazziFrameRun3 = 'player/bazzi/frames/run_3.png';
+  static const bazziFrameJump = 'player/bazzi/frames/jump.png';
+  static const bazziFrameFall = 'player/bazzi/frames/fall.png';
 }
 
 final class AudioAssets {

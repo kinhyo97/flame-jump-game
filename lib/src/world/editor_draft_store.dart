@@ -21,6 +21,7 @@ final class EditorDraftStore {
 
   static LevelData clone(LevelData level) {
     return LevelData(
+      worldWidth: level.worldWidth,
       playerSpawn: level.playerSpawn.clone(),
       exitPosition: level.exitPosition.clone(),
       surfaces: level.surfaces

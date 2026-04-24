@@ -4,6 +4,7 @@ import '../level_models.dart';
 import '../platform_surface.dart';
 
 final LevelData level3Data = LevelData(
+  worldWidth: 2240,
   playerSpawn: Vector2(160, 576),
   exitPosition: Vector2(2080, 560),
   surfaces: [
@@ -16,7 +17,6 @@ final LevelData level3Data = LevelData(
     PlatformSurface(position: Vector2(1504, 448), size: Vector2(128, 28)),
   ],
   coinSpawnPoints: [
-    Vector2(108, 456),
     Vector2(228, 512),
     Vector2(356, 452),
     Vector2(484, 512),
@@ -31,7 +31,22 @@ final LevelData level3Data = LevelData(
     Vector2(1144, 292),
     Vector2(1144, 372),
     Vector2(1144, 464),
+    Vector2(1144, 160),
+    Vector2(1144, 248),
+    Vector2(1144, 332),
+    Vector2(1144, 416),
+    Vector2(1816, 260),
+    Vector2(1816, 284),
+    Vector2(1816, 312),
+    Vector2(1816, 340),
+    Vector2(1816, 368),
+    Vector2(1816, 396),
+    Vector2(1400, 452),
+    Vector2(1432, 420),
+    Vector2(1460, 392),
   ],
+  heartSpawnPoints: [],
+  starSpawnPoints: [],
   spikeSpawnPoints: [
     Vector2(104, 592),
     Vector2(356, 592),
@@ -40,20 +55,13 @@ final LevelData level3Data = LevelData(
   sawSpawnPoints: [
     Vector2(1136, 580),
     Vector2(1244, 460),
-    Vector2(1348, 456),
-    Vector2(1440, 452),
-    Vector2(1668, 452),
-    Vector2(1756, 448),
+    Vector2(1808, 556),
   ],
   checkpoints: [],
   springSpawnPoints: [],
+  walls: [],
   movingPlatforms: [],
-  disappearingPlatforms: [
-    DisappearingPlatformData(
-      position: Vector2(1504, 448),
-      size: Vector2(128, 24),
-      collapseDelay: 0.5,
-      respawnDelay: 2.0,
-    ),
-  ],
+  verticalMovingPlatforms: [],
+  disappearingPlatforms: [],
+  testPortals: [],
 );

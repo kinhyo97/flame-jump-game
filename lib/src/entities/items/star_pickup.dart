@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flame/components.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../core/assets.dart';
 import '../../game/jump_game.dart';
@@ -39,4 +40,6 @@ class StarPickup extends Collectible with HasGameReference<JumpGame> {
 
     sprite.angle += dt * 0.8;
   }
+
+  Rect get bounds => Rect.fromLTWH(position.x, position.y, size.x, size.y);
 }

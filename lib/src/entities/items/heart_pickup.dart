@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flame/components.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../core/assets.dart';
 import '../../game/jump_game.dart';
@@ -32,4 +33,6 @@ class HeartPickup extends Collectible with HasGameReference<JumpGame> {
     _elapsed += dt;
     position.y = _basePosition.y + math.sin(_elapsed * 2.8) * 3;
   }
+
+  Rect get bounds => Rect.fromLTWH(position.x, position.y, size.x, size.y);
 }

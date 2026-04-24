@@ -3,7 +3,9 @@ import '../../core/constants.dart';
 final class EditorConstants {
   const EditorConstants._();
 
-  static const worldWidth = GameConstants.levelWidth;
+  static const defaultWorldWidth = GameConstants.levelWidth;
+  static const minWorldWidth = 1280.0;
+  static const maxWorldWidth = 6400.0;
   static const worldHeight = GameConstants.levelHeight;
   static const tileSize = 32.0;
   static const gridYOffset = (worldHeight - GameConstants.floorHeight) % tileSize;

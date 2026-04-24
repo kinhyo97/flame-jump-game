@@ -1,5 +1,6 @@
 // 플레이어가 획득할 수 있는 코인을 표시하고 상태를 보관하는 아이템 파일.
 import 'package:flame/components.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../core/assets.dart';
 import '../../game/jump_game.dart';
@@ -28,4 +29,6 @@ class Coin extends Collectible with HasGameReference<JumpGame> {
       ),
     );
   }
+
+  Rect get bounds => Rect.fromLTWH(position.x, position.y, size.x, size.y);
 }

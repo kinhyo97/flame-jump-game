@@ -1,9 +1,12 @@
 import 'package:flame/components.dart';
 
+import '../../core/constants.dart';
 import '../../world/level_models.dart';
 import '../../world/platform_surface.dart';
 
 LevelData? parseLevelDataCode(String source) {
+  final worldWidth = _parseDoubleField(source, 'worldWidth') ??
+      GameConstants.levelWidth;
   final playerSpawn = _parseSingleVector(source, 'playerSpawn');
   final exitPosition = _parseSingleVector(source, 'exitPosition');
   if (playerSpawn == null || exitPosition == null) {
@@ -25,6 +28,7 @@ LevelData? parseLevelDataCode(String source) {
   final testPortals = _parseTestPortals(source);
 
   return LevelData(
+    worldWidth: worldWidth,
     playerSpawn: playerSpawn,
     exitPosition: exitPosition,
     surfaces: surfaces,
@@ -83,6 +87,14 @@ List<PlatformSurface> _parseSurfaces(String source) {
     }
     return PlatformSurface(position: position, size: size);
   }).whereType<PlatformSurface>().toList();
+}
+
+double? _parseDoubleField(String source, String fieldName) {
+  final match = RegExp('$fieldName\\s*:\\s*([^,\\n]+)').firstMatch(source);
+  if (match == null) {
+    return null;
+  }
+  return double.tryParse(match.group(1)!.trim());
 }
 
 

@@ -62,6 +62,8 @@ flutter:
   assets:
     - assets/images/backgrounds/
     - assets/images/player/
+    - assets/images/player/bazzi/
+    - assets/images/player/bazzi/frames/
     - assets/images/enemies/
     - assets/images/terrain/
     - assets/images/items/

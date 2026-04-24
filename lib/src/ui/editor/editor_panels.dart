@@ -8,17 +8,9 @@ class EditorTopToolbar extends StatelessWidget {
   const EditorTopToolbar({
     super.key,
     required this.loadedMapLabel,
-    required this.surfaceCount,
-    required this.coinCount,
-    required this.heartCount,
-    required this.starCount,
-    required this.spikeCount,
-    required this.sawCount,
-    required this.checkpointCount,
-    required this.springCount,
-    required this.wallCount,
-    required this.disappearingPlatformCount,
-    required this.currentTool,
+    required this.worldWidth,
+    required this.onDecreaseWidthPressed,
+    required this.onIncreaseWidthPressed,
     required this.onLoadPressed,
     required this.onMapTestPressed,
     required this.onPlayPressed,
@@ -27,17 +19,9 @@ class EditorTopToolbar extends StatelessWidget {
   });
 
   final String loadedMapLabel;
-  final int surfaceCount;
-  final int coinCount;
-  final int heartCount;
-  final int starCount;
-  final int spikeCount;
-  final int sawCount;
-  final int checkpointCount;
-  final int springCount;
-  final int wallCount;
-  final int disappearingPlatformCount;
-  final EditorTool currentTool;
+  final int worldWidth;
+  final VoidCallback onDecreaseWidthPressed;
+  final VoidCallback onIncreaseWidthPressed;
   final VoidCallback onLoadPressed;
   final VoidCallback onMapTestPressed;
   final VoidCallback onPlayPressed;
@@ -46,66 +30,44 @@ class EditorTopToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pointObjectCounts = {
-      EditorTool.coin: coinCount,
-      EditorTool.heart: heartCount,
-      EditorTool.star: starCount,
-      EditorTool.spike: spikeCount,
-      EditorTool.saw: sawCount,
-      EditorTool.spring: springCount,
-    };
-
     return EditorPanel(
-      child: Row(
-        children: [
-          const Text(
-            'Map Editor',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            const Text(
+              'Map Editor',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          ToolbarChip(label: loadedMapLabel, active: true),
-          const SizedBox(width: 8),
-          const ToolbarChip(label: 'Grid 32px'),
-          const SizedBox(width: 8),
-          ToolbarChip(
-            label: _toolLabel(currentTool),
-            active: currentTool != EditorTool.cursor,
-          ),
-          const SizedBox(width: 8),
-          ToolbarChip(label: 'Surfaces $surfaceCount'),
-          const SizedBox(width: 8),
-          ...editorPointObjectDefinitions.expand((definition) {
-            final count = pointObjectCounts[definition.tool] ?? 0;
-            return [
-              ToolbarChip(label: '${definition.label}s $count'),
-              const SizedBox(width: 8),
-            ];
-          }),
-          ToolbarChip(label: 'Flags $checkpointCount'),
-          const SizedBox(width: 8),
-          ToolbarChip(label: 'Walls $wallCount'),
-          const SizedBox(width: 8),
-          ToolbarChip(label: 'Breaks $disappearingPlatformCount'),
-          const SizedBox(width: 8),
-          const Spacer(),
-          ToolbarButton(label: 'Load', onPressed: onLoadPressed),
-          const SizedBox(width: 10),
-          ToolbarButton(label: 'Import', onPressed: onImportPressed),
-          const SizedBox(width: 10),
-          ToolbarButton(label: 'Export', onPressed: onExportPressed),
-          const SizedBox(width: 10),
-          ToolbarButton(label: 'Map Test', onPressed: onMapTestPressed),
-          const SizedBox(width: 10),
-          ToolbarButton(
-            label: 'Play',
-            highlighted: true,
-            onPressed: onPlayPressed,
-          ),
-        ],
+            const SizedBox(width: 16),
+            ToolbarChip(label: loadedMapLabel, active: true),
+            const SizedBox(width: 8),
+            ToolbarChip(label: 'Width $worldWidth'),
+            const SizedBox(width: 8),
+            ToolbarButton(label: '- Width', onPressed: onDecreaseWidthPressed),
+            const SizedBox(width: 8),
+            ToolbarButton(label: '+ Width', onPressed: onIncreaseWidthPressed),
+            const SizedBox(width: 24),
+            ToolbarButton(label: 'Load Round', onPressed: onLoadPressed),
+            const SizedBox(width: 10),
+            ToolbarButton(label: 'Import', onPressed: onImportPressed),
+            const SizedBox(width: 10),
+            ToolbarButton(label: 'Export', onPressed: onExportPressed),
+            const SizedBox(width: 10),
+            ToolbarButton(label: 'Map Test', onPressed: onMapTestPressed),
+            const SizedBox(width: 10),
+            ToolbarButton(
+              label: 'Play',
+              highlighted: true,
+              onPressed: onPlayPressed,
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
       ),
     );
   }
@@ -240,6 +202,7 @@ class EditorToolPalette extends StatelessWidget {
 class EditorInspectorPanel extends StatelessWidget {
   const EditorInspectorPanel({
     super.key,
+    required this.worldWidth,
     required this.surfaceCount,
     required this.coinCount,
     required this.heartCount,
@@ -253,6 +216,7 @@ class EditorInspectorPanel extends StatelessWidget {
     required this.currentTool,
   });
 
+  final int worldWidth;
   final int surfaceCount;
   final int coinCount;
   final int heartCount;
@@ -287,10 +251,10 @@ class EditorInspectorPanel extends StatelessWidget {
               const SizedBox(height: 12),
               const SectionLabel('Canvas Units'),
               const SizedBox(height: 10),
-              const InfoCard(
+              InfoCard(
                 title: 'World Space',
                 rows: [
-                  'width: 2240',
+                  'width: $worldWidth',
                   'height: 720',
                   'tile step: 32',
                   'floor height: 96',

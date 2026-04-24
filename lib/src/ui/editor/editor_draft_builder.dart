@@ -9,6 +9,7 @@ import 'editor_session_data.dart';
 EditorSessionData restoreEditorSession(LevelData? savedDraft) {
   if (savedDraft == null) {
     return EditorSessionData(
+      worldWidth: EditorConstants.defaultWorldWidth,
       surfaces: [],
       coins: [],
       hearts: [],
@@ -27,12 +28,13 @@ EditorSessionData restoreEditorSession(LevelData? savedDraft) {
         surface.position.x == 0 &&
         surface.position.y ==
             EditorConstants.worldHeight - GameConstants.floorHeight &&
-        surface.size.x == EditorConstants.worldWidth &&
+        surface.size.x == savedDraft.worldWidth &&
         surface.size.y == GameConstants.floorHeight;
     return !isFloorSurface;
   });
 
   return EditorSessionData(
+    worldWidth: savedDraft.worldWidth,
     surfaces: editableSurfaces
         .map(
           (surface) => PlatformSurface(
@@ -81,6 +83,7 @@ EditorSessionData restoreEditorSession(LevelData? savedDraft) {
 }
 
 LevelData buildDraftLevelData({
+  required double worldWidth,
   required List<PlatformSurface> surfaces,
   required List<Vector2> coins,
   required List<Vector2> hearts,
@@ -97,23 +100,24 @@ LevelData buildDraftLevelData({
       0,
       EditorConstants.worldHeight - GameConstants.floorHeight,
     ),
-    size: Vector2(EditorConstants.worldWidth, GameConstants.floorHeight),
+    size: Vector2(worldWidth, GameConstants.floorHeight),
   );
   final playerSpawn = Vector2(
     PlayerConstants.spawn.x.clamp(
       0,
-      EditorConstants.worldWidth - PlayerConstants.size.x,
+      worldWidth - PlayerConstants.size.x,
     ),
     EditorConstants.worldHeight -
         GameConstants.floorHeight -
         PlayerConstants.size.y,
   );
   final exitPosition = Vector2(
-    EditorConstants.worldWidth - 160,
+    worldWidth - 160,
     EditorConstants.worldHeight - GameConstants.floorHeight - 64,
   );
 
   return LevelData(
+    worldWidth: worldWidth,
     playerSpawn: playerSpawn,
     exitPosition: exitPosition,
     surfaces: [
